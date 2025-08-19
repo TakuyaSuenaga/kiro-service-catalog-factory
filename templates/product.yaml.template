@@ -1,0 +1,6 @@
+name: "Product Name"
+description: "Product description"
+owner: "team@company.com"
+support_description: "Support description"
+support_email: "support@company.com"
+support_url: "https://wiki.company.com/support"

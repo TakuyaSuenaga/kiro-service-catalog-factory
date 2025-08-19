@@ -1,0 +1,6 @@
+name: "EC2 Instances"
+description: "Ubuntu 24.04 ARM SSM対応EC2インスタンス"
+owner: "infrastructure-team@company.com"
+support_description: "インフラチームがサポートします"
+support_email: "infrastructure-team@company.com"
+support_url: "https://wiki.company.com/ec2-support"

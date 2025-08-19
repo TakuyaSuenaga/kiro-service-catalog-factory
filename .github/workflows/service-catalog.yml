@@ -1,0 +1,90 @@
+name: AWS Service Catalog Automation
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "portfolios/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "portfolios/**"
+  workflow_dispatch: # 手動実行を可能にする
+
+# OIDC認証のための権限設定
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+jobs:
+  deploy-service-catalog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # 変更検知のために前のコミットも取得
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-ServiceCatalog
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS connection
+        run: |
+          echo "AWS認証確認中..."
+          aws sts get-caller-identity
+          echo "AWS接続成功"
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml boto3
+
+          # jq をインストール (JSON処理用)
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Detect changed portfolios and products
+        id: detect-changes
+        run: |
+          echo "変更検知を実行中..."
+          python scripts/detect-changes.py
+
+      - name: Deploy to AWS Service Catalog
+        if: steps.detect-changes.outputs.has-changes == 'true'
+        run: |
+          echo "AWS Service Catalogへのデプロイを開始..."
+          echo "検知された変更: ${{ steps.detect-changes.outputs.changes }}"
+
+          # スクリプトに実行権限を付与
+          chmod +x scripts/*.sh
+
+          # 変更ベースデプロイを実行
+          scripts/deploy-catalog.sh deploy-changes
+
+          echo "デプロイ完了"
+
+      - name: Deploy all portfolios (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "全ポートフォリオのデプロイを開始..."
+          chmod +x scripts/*.sh
+          scripts/deploy-catalog.sh deploy portfolios
+          echo "全デプロイ完了"
