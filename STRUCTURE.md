@@ -1,33 +1,11 @@
 # AWS Service Catalog 自動化システム - プロジェクト構造
 
-このドキュメントでは、AWS Service Catalog 自動化システムの全体的なプロジェクト構造について説明します。
+このドキュメントでは、AWS Service Catalog 自動化システムの最小限のプロジェクト構造について説明します。
 
 ## 🏗️ アーキテクチャ概要
 
-```mermaid
-graph TB
-    A[GitHub Repository] --> B[GitHub Actions]
-    B --> C[OIDC Authentication]
-    C --> D[AWS Service Catalog]
-    
-    subgraph "Repository Structure"
-        E[portfolios/]
-        F[scripts/]
-        G[.github/workflows/]
-        H[cdk/]
-        I[tests/]
-        J[docs/]
-    end
-    
-    subgraph "AWS Resources"
-        K[Portfolios]
-        L[Products]
-        M[CloudFormation Templates]
-    end
-    
-    D --> K
-    K --> L
-    L --> M
+```
+GitHub Actions (手動実行) → OIDC認証 → AWS CDK → Service Catalog
 ```
 
 ## 📁 ディレクトリ構造
@@ -36,102 +14,40 @@ graph TB
 aws-service-catalog-automation/
 ├── 📂 .github/
 │   └── 📂 workflows/
-│       └── 📄 service-catalog.yml          # メインワークフロー
+│       └── 📄 service-catalog.yml         # 手動実行ワークフロー
 ├── 📂 .kiro/
-│   └── 📂 specs/                           # Kiro仕様書
+│   └── 📂 specs/                          # Kiro仕様書
 │       └── 📂 aws-service-catalog-automation/
-│           ├── 📄 requirements.md          # 要件定義
-│           ├── 📄 design.md               # 設計書
-│           └── 📄 tasks.md                # 実装タスク
-├── 📂 portfolios/                          # 🎯 メインコンテンツ
-│   ├── 📂 development/                     # 開発環境
-│   │   ├── 📄 portfolio.yaml              # ポートフォリオ設定
-│   │   └── 📂 ec2-instances/               # プロダクト
-│   │       ├── 📄 product.yaml            # プロダクト設定
-│   │       └── 📂 v1.0.0/                 # バージョン
-│   │           └── 📄 template.yaml       # CFnテンプレート
-│   └── 📂 production/                      # 本番環境（例）
-├── 📂 scripts/                             # 🔧 管理スクリプト
-│   ├── 🐍 config_parser.py               # 設定解析
-│   ├── 🐍 detect-changes.py              # 変更検知
-│   ├── 🔨 manage-portfolio.sh            # ポートフォリオ管理
-│   ├── 🔨 manage-product.sh              # プロダクト管理
-│   └── 🔨 deploy-catalog.sh              # 統合デプロイ
-├── 📂 cdk/                                # ☁️ AWS CDK
-│   ├── 🐍 app.py                         # CDKアプリ
-│   ├── 🐍 service_catalog_stack.py       # スタック定義
-│   ├── 🐍 deploy_with_cdk.py            # デプロイスクリプト
-│   └── 📄 requirements.txt               # Python依存関係
-├── 📂 templates/                          # 📋 テンプレート
-│   ├── 📄 portfolio.yaml.template        # ポートフォリオ雛形
-│   └── 📄 product.yaml.template          # プロダクト雛形
-├── 📂 tests/                              # 🧪 テスト
-│   ├── 🐍 test_config_parser.py          # 設定解析テスト
-│   ├── 🐍 test_detect_changes_fixed.py   # 変更検知テスト
-│   ├── 🐍 test_aws_cli_commands.py       # AWS CLIテスト
-│   ├── 🐍 run_tests.py                   # テスト実行
-│   └── 📄 requirements.txt               # テスト依存関係
-├── 📂 docs/                               # 📚 ドキュメント
-│   ├── 📄 FOLDER_STRUCTURE.md            # フォルダ構造詳細
-│   └── 📄 TROUBLESHOOTING.md             # トラブルシューティング
-├── 📄 README.md                           # メインドキュメント
-├── 📄 STRUCTURE.md                        # このファイル
-└── 📄 requirements.txt                    # Python依存関係
+│           ├── 📄 requirements.md         # 要件定義
+│           ├── 📄 design.md              # 設計書
+│           └── 📄 tasks.md               # 実装タスク
+├── 📂 cdk/                               # ☁️ AWS CDK
+│   ├── 🐍 app.py                        # CDKアプリケーション
+│   ├── 🐍 service_catalog_stack.py      # Service Catalogスタック
+│   ├── 📄 cdk.json                      # CDK設定
+│   └── 📄 requirements.txt              # Python依存関係
+├── 📂 portfolios/                        # 🎯 メインコンテンツ
+│   └── 📂 development/                   # 開発環境
+│       ├── 📄 portfolio.yaml            # ポートフォリオ設定
+│       └── 📂 ec2-instances/             # プロダクト
+│           ├── 📄 product.yaml          # プロダクト設定
+│           └── 📂 v1.0.0/               # バージョン
+│               └── 📄 template.yaml     # CloudFormationテンプレート
+├── 📄 README.md                          # メインドキュメント
+└── 📄 STRUCTURE.md                       # このファイル
 ```
 
 ## 🎯 主要コンポーネント
 
-### 1. portfolios/ - コンテンツ管理
+### 1. .github/workflows/ - 手動実行パイプライン
 
-**目的**: AWS Service Catalog のポートフォリオとプロダクトを定義
-
-**構造**:
-```
-portfolios/
-└── [環境名]/
-    ├── portfolio.yaml              # ポートフォリオ設定
-    └── [プロダクト名]/
-        ├── product.yaml            # プロダクト設定
-        └── [バージョン]/
-            └── template.yaml       # CloudFormationテンプレート
-```
-
-**特徴**:
-- 環境別の分離（development, staging, production）
-- バージョン管理によるテンプレート履歴
-- 宣言的な設定管理
-
-### 2. scripts/ - 自動化エンジン
-
-**目的**: デプロイメントとメンテナンスの自動化
-
-**主要スクリプト**:
-
-| スクリプト | 言語 | 目的 |
-|---|---|---|
-| `config_parser.py` | Python | YAML設定の解析・検証 |
-| `detect-changes.py` | Python | Git変更の検知・分析 |
-| `manage-portfolio.sh` | Bash | ポートフォリオのCRUD操作 |
-| `manage-product.sh` | Bash | プロダクトのCRUD操作 |
-| `deploy-catalog.sh` | Bash | 統合デプロイメント |
-
-**特徴**:
-- モジュラー設計
-- エラーハンドリング
-- DRY_RUNモード対応
-- 詳細ログ出力
-
-### 3. .github/workflows/ - CI/CD パイプライン
-
-**目的**: GitHub Actions による自動デプロイ
+**目的**: GitHub Actionsによる手動デプロイ
 
 **ワークフロー**:
 ```yaml
-name: Deploy Service Catalog
+name: Deploy AWS Service Catalog
 on:
-  push:
-    branches: [main]
-    paths: ['portfolios/**']
+  workflow_dispatch:  # 手動実行のみ
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -140,82 +56,69 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - name: Deploy changes
-        run: scripts/deploy-catalog.sh deploy-changes
+      - name: Deploy CDK
+        run: |
+          cd cdk
+          pip install -r requirements.txt
+          npm install -g aws-cdk
+          cdk deploy --require-approval never
 ```
 
 **特徴**:
+- 手動実行のみ（workflow_dispatch）
 - OIDC認証
-- 変更検知ベースデプロイ
-- セキュアな認証情報管理
+- シンプルなデプロイフロー
 
-### 4. cdk/ - 高度な操作
+### 2. cdk/ - AWS CDK実装
 
-**目的**: AWS CLIで困難な操作のフォールバック
+**目的**: Service Catalogリソースの作成
 
 **構成**:
 - `app.py`: CDKアプリケーションエントリーポイント
-- `service_catalog_stack.py`: Service Catalogリソース定義
-- `deploy_with_cdk.py`: デプロイメントロジック
+- `service_catalog_stack.py`: ポートフォリオとプロダクトの定義
+- `cdk.json`: CDK設定ファイル
+- `requirements.txt`: Python依存関係
 
 **特徴**:
-- 複雑なリソース関係の管理
-- プログラマティックなエラーハンドリング
-- AWS CLIの補完
+- 単一スタック
+- YAMLファイル読み込み
+- 最小限の実装
 
-### 5. tests/ - 品質保証
+### 3. portfolios/ - コンテンツ管理
 
-**目的**: システムの信頼性確保
+**目的**: AWS Service Catalog のポートフォリオとプロダクトを定義
 
-**テストカバレッジ**:
-- 設定ファイル解析
-- 変更検知ロジック
-- AWS CLI コマンド生成
-- エラーハンドリング
-
-**実行方法**:
-```bash
-python3 tests/run_tests.py
+**構造**:
 ```
+portfolios/
+└── development/
+    ├── portfolio.yaml              # ポートフォリオ設定
+    └── ec2-instances/
+        ├── product.yaml            # プロダクト設定
+        └── v1.0.0/
+            └── template.yaml       # CloudFormationテンプレート
+```
+
+**特徴**:
+- 固定のファイルパス
+- 既存ファイル構造の活用
+- シンプルな設定
 
 ## 🔄 データフロー
 
-### 1. 開発フロー
+### 手動実行フロー
 
-```mermaid
-sequenceDiagram
-    participant Dev as 開発者
-    participant Git as GitHub
-    participant GA as GitHub Actions
-    participant AWS as AWS Service Catalog
-    
-    Dev->>Git: ポートフォリオ/プロダクト追加
-    Git->>GA: プッシュイベント
-    GA->>GA: 変更検知
-    GA->>AWS: OIDC認証
-    GA->>AWS: ポートフォリオ作成
-    GA->>AWS: プロダクト作成
-    AWS-->>GA: 作成結果
-    GA-->>Git: デプロイ結果
 ```
-
-### 2. 設定処理フロー
-
-```mermaid
-flowchart TD
-    A[portfolio.yaml] --> B[config_parser.py]
-    C[product.yaml] --> B
-    D[template.yaml] --> B
-    B --> E{検証OK?}
-    E -->|Yes| F[AWS CLI実行]
-    E -->|No| G[エラー報告]
-    F --> H[Service Catalog更新]
-    G --> I[GitHub Actions失敗]
+1. 開発者がGitHub Actionsを手動実行
+2. OIDC認証でAWSに接続
+3. CDKがYAMLファイルを読み込み
+4. Service Catalogにポートフォリオとプロダクトを作成
+5. 完了
 ```
 
 ## 🛠️ 技術スタック
@@ -224,8 +127,7 @@ flowchart TD
 
 | 技術 | 用途 | バージョン |
 |---|---|---|
-| Python | 設定解析、テスト | 3.8+ |
-| Bash | システム管理 | 4.0+ |
+| Python | CDK実装 | 3.9+ |
 | YAML | 設定ファイル | 1.2 |
 | AWS CDK | インフラ定義 | 2.x |
 
@@ -235,112 +137,58 @@ flowchart TD
 |---|---|
 | Service Catalog | プロダクト管理 |
 | CloudFormation | リソース定義 |
-| IAM | 認証・認可 |
-| S3 | 大きなテンプレート保存 |
+| IAM | OIDC認証 |
 
 ### 開発ツール
 
 | ツール | 用途 |
 |---|---|
-| GitHub Actions | CI/CD |
-| pytest | 単体テスト |
-| jq | JSON処理 |
-| yamllint | YAML検証 |
+| GitHub Actions | 手動実行 |
+| AWS CDK CLI | デプロイ |
+| PyYAML | YAML解析 |
 
-## 📊 メトリクスと監視
+## 🔒 セキュリティ
 
-### 1. システムメトリクス
+### OIDC認証
 
-```bash
-# ポートフォリオ数
-find portfolios/ -name "portfolio.yaml" | wc -l
+- 長期間有効なアクセスキー不要
+- 特定リポジトリからのみアクセス
+- 最小権限のIAMロール
 
-# プロダクト数
-find portfolios/ -name "product.yaml" | wc -l
+### 設定管理
 
-# バージョン数
-find portfolios/ -name "template.yaml" | wc -l
-```
+- GitHub Secretsで認証情報管理
+- 固定ファイルパスで予測可能な動作
 
-### 2. 品質メトリクス
+## 📊 システムの特徴
 
-```bash
-# テストカバレッジ
-python3 tests/run_tests.py
+### 最小限の設計
 
-# 設定ファイル検証
-scripts/deploy-catalog.sh validate
-```
+- テスト機能なし
+- エラーハンドリング最小限
+- 自動実行なし（手動のみ）
+- 単一環境対応
 
-### 3. パフォーマンスメトリクス
+### シンプルな運用
 
-- GitHub Actions実行時間
-- AWS API呼び出し回数
-- デプロイ成功率
+- 手動実行による制御
+- 既存ファイル構造の活用
+- 設定変更不要
 
-## 🔒 セキュリティ考慮事項
+## 🚀 使用方法
 
-### 1. 認証・認可
+### 1. セットアップ
+1. AWS OIDC設定
+2. GitHub Secrets設定
+3. ファイル確認
 
-- **OIDC認証**: 長期間有効なアクセスキー不要
-- **最小権限**: 必要最小限のIAM権限
-- **リポジトリ制限**: 特定リポジトリからのみアクセス
+### 2. 実行
+1. GitHub Actionsページに移動
+2. 「Deploy AWS Service Catalog」選択
+3. 「Run workflow」クリック
 
-### 2. データ保護
+### 3. 確認
+1. AWS Service Catalogコンソールで確認
+2. GitHub Actionsログで結果確認
 
-- **機密情報**: GitHub Secretsで管理
-- **ログ**: 機密情報のマスキング
-- **テンプレート**: 事前検証
-
-### 3. 監査
-
-- **操作ログ**: すべての操作を記録
-- **変更履歴**: Gitによるバージョン管理
-- **アクセス制御**: GitHub権限による制御
-
-## 🚀 スケーラビリティ
-
-### 1. 水平スケーリング
-
-- **並列処理**: 複数プロダクトの同時デプロイ
-- **リージョン分散**: 複数リージョンでの運用
-- **チーム分離**: ポートフォリオ単位での管理
-
-### 2. 垂直スケーリング
-
-- **大きなテンプレート**: S3を使用した管理
-- **複雑な依存関係**: CDKによる高度な制御
-- **カスタム処理**: 拡張可能なスクリプト構造
-
-## 📈 将来の拡張
-
-### 1. 機能拡張
-
-- **マルチリージョン対応**: 複数リージョンでの同期デプロイ
-- **承認ワークフロー**: プルリクエストベースの承認
-- **通知機能**: Slack/Teams連携
-
-### 2. 運用改善
-
-- **メトリクス収集**: CloudWatchとの連携
-- **自動テスト**: より包括的なテストスイート
-- **ドキュメント生成**: 自動ドキュメント更新
-
-## 🤝 コントリビューション
-
-### 1. 開発プロセス
-
-1. Issueの作成
-2. フィーチャーブランチの作成
-3. 実装とテスト
-4. プルリクエストの作成
-5. レビューとマージ
-
-### 2. コーディング規約
-
-- **Python**: PEP 8準拠
-- **Bash**: ShellCheckによる検証
-- **YAML**: yamllintによる検証
-- **ドキュメント**: 日本語での記述
-
-この構造により、スケーラブルで保守性の高いAWS Service Catalog自動化システムを実現しています。
+この最小限の構造により、シンプルで保守しやすいAWS Service Catalog自動化システムを実現しています。
