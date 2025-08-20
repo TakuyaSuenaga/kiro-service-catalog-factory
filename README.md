@@ -137,6 +137,87 @@ Description: 'Ubuntu 24.04 ARM SSM対応EC2インスタンス'
 # ... CloudFormationテンプレートの内容
 ```
 
+## 🔄 システム動作フロー
+
+### 全体のシーケンス図
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 開発者
+    participant GH as 🐙 GitHub Actions
+    participant AWS as ☁️ AWS
+    participant S3 as 🪣 S3 Bucket
+    participant CDK as 🏗️ AWS CDK
+    participant SC as 📋 Service Catalog
+    
+    User->>GH: 手動でワークフロー実行
+    Note over User,GH: Actions > Deploy AWS Service Catalog > Run workflow
+    
+    GH->>GH: リポジトリをチェックアウト
+    GH->>AWS: OIDC認証でAWSに接続
+    Note over GH,AWS: configure-aws-credentials@v4
+    
+    GH->>GH: Python環境セットアップ
+    GH->>GH: CDK依存関係インストール
+    GH->>CDK: CDKデプロイ実行
+    
+    CDK->>CDK: YAMLファイル読み込み
+    Note over CDK: portfolio.yaml, product.yaml読み込み
+    
+    CDK->>S3: S3バケット作成/参照
+    Note over CDK,S3: service-catalog-templates-main
+    
+    CDK->>S3: CloudFormationテンプレートアップロード
+    Note over CDK,S3: portfolios/development/ec2-instances/v1.0.0/template.yaml
+    
+    CDK->>SC: Service Catalogポートフォリオ作成
+    Note over CDK,SC: Development Portfolio
+    
+    CDK->>SC: Service Catalogプロダクト作成
+    Note over CDK,SC: EC2 Instances (v1.0.0)
+    
+    CDK->>SC: ポートフォリオとプロダクトを関連付け
+    
+    SC-->>CDK: 作成完了
+    CDK-->>GH: デプロイ成功
+    GH-->>User: ワークフロー完了通知
+    
+    Note over User,SC: AWS Service Catalogでプロダクトが利用可能
+```
+
+### 詳細な処理フロー
+
+```mermaid
+flowchart TD
+    A[手動実行開始] --> B[GitHub Actions起動]
+    B --> C[OIDC認証]
+    C --> D[CDKアプリケーション実行]
+    
+    D --> E[portfolio.yaml読み込み]
+    D --> F[product.yaml読み込み]
+    
+    E --> G{S3バケット存在確認}
+    F --> G
+    
+    G -->|存在する| H[既存バケット使用]
+    G -->|存在しない| I[新規バケット作成]
+    
+    H --> J[CloudFormationテンプレートアップロード]
+    I --> J
+    
+    J --> K[Service Catalogポートフォリオ作成]
+    K --> L[Service Catalogプロダクト作成]
+    L --> M[ポートフォリオ-プロダクト関連付け]
+    
+    M --> N[デプロイ完了]
+    N --> O[AWS Service Catalogで利用可能]
+    
+    style A fill:#e1f5fe
+    style O fill:#c8e6c9
+    style C fill:#fff3e0
+    style G fill:#f3e5f5
+```
+
 ## 🔧 ローカル開発
 
 ### CDKの実行
