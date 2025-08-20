@@ -2,6 +2,7 @@ import os
 import yaml
 from aws_cdk import (
     Stack,
+    RemovalPolicy,
     aws_servicecatalog as servicecatalog,
     aws_s3 as s3,
     aws_s3_deployment as s3deploy,
@@ -21,13 +22,25 @@ class ServiceCatalogStack(Stack):
         # Load product configuration
         product_config = self._load_yaml_file("../portfolios/development/ec2-instances/product.yaml")
 
-        # Create S3 bucket for CloudFormation templates
-        template_bucket = s3.Bucket(
-            self, "TemplateBucket",
-            bucket_name=f"service-catalog-templates-{self.account}-{self.region}",
-            versioned=True,
-            public_read_access=False,
-        )
+        # Get bucket name from context or use default
+        template_bucket_name = self.node.try_get_context("template_bucket_name")
+        
+        if template_bucket_name:
+            # Use existing bucket specified in cdk.json
+            template_bucket = s3.Bucket.from_bucket_name(
+                self, "TemplateBucket", template_bucket_name
+            )
+        else:
+            # Create new bucket with predictable name
+            default_bucket_name = f"service-catalog-templates-{self.account}-{self.region}"
+            template_bucket = s3.Bucket(
+                self, "TemplateBucket",
+                bucket_name=default_bucket_name,
+                versioned=True,
+                public_read_access=False,
+                removal_policy=RemovalPolicy.RETAIN,  # Keep bucket when stack is deleted
+                auto_delete_objects=False,  # Don't auto-delete objects for safety
+            )
 
         # Upload CloudFormation template to S3
         template_deployment = s3deploy.BucketDeployment(

@@ -55,6 +55,7 @@
     "@aws-cdk/aws-kms:reduceCrossAccountRegionPolicyScope": true,
     "@aws-cdk/aws-opensearchservice:enableVersionUpgrade": true,
     "@aws-cdk/aws-gamelift:FleetIpProtocol": true,
-    "@aws-cdk/aws-route53-patterns:useCertificate": true
+    "@aws-cdk/aws-route53-patterns:useCertificate": true,
+    "template_bucket_name": "service-catalog-templates-main"
   }
 }
